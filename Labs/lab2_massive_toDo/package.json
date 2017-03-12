@@ -1,0 +1,19 @@
+{
+  "name": "lab2_part3",
+  "version": "1.0.0",
+  "description": "lab2 part3 ",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jonathan Riordan",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.16.1",
+    "express": "^4.14.1",
+    "pg": "^4.4.3",
+    "pg-hstore": "^2.3.2",
+    "sequelize": "^3.12.2",
+    "sequelize-cli": "^2.1.0"
+  }
+}

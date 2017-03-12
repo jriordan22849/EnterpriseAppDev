@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+
+curl --data "name=JonathanRiordan","room=15","ext=ext" http://127.0.0.1:3000/judge
+curl --data "name=DonaldTrump,room=16,ext=ext" http://127.0.0.1:3000/judge
+curl --data "name=Putin,room=7,ext=ext" http://127.0.0.1:3000/judge
+
+
