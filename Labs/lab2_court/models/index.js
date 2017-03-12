@@ -16,8 +16,9 @@ var config    = require(__dirname + '/../config/config.json')[env];
 var caseModel =require(__dirname + '/../models/case.js')
 var courtroom =require(__dirname + '/../models/courtroom.js')
 var judge =require(__dirname + '/../models/judge.js')
-var courtroom =require(__dirname + '/../models/participant.js')
-var db = {caseModel,courtroom,judge,courtroom};
+var participant =require(__dirname + '/../models/participant.js')
+var users =require(__dirname + '/../models/users.js')
+var db = {caseModel,courtroom,judge,participant,users};
 
 
 

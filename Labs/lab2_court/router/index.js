@@ -7,10 +7,12 @@ Enterprise Application Development
 */
 var express = require('express')
 var router = express();
-
 var models = require('../models/index');
-
 var bodyParser = require('body-parser');
+var jwt    = require('jsonwebtoken'); // used to create, sign, and verify tokens
+
+var bcrypt = require('bcrypt');
+var salt = bcrypt.genSaltSync(10);
 
 router.use(bodyParser.urlencoded({ extended: true }));
 router.use(bodyParser.json());
@@ -377,3 +379,28 @@ router.get('/courtRoom/:id', function(req, res) {
     res.json(cs);
   });
 });
+
+
+/*
+Lab 3 - Authentificatiom
+Part 1 - password hashing
+*/
+// Default to insert user into table, password hased and salted/
+router.get('/setup', function(req, res) {
+	password = bcrypt.hashSync("my password", salt);
+
+  	// create a sample user
+	var user = models.Users.create({
+		username: "John",
+		password: password
+	}).then(function(user) {
+		res.send(user)
+	});
+});
+
+router.get('/users', function(req, res) {
+	models.Users.findAll({}).then(function(user) {
+		res.json(user);
+	});
+});
+
