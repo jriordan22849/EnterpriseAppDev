@@ -10,9 +10,10 @@ var router = express();
 var models = require('../models/index');
 var bodyParser = require('body-parser');
 var jwt    = require('jsonwebtoken'); // used to create, sign, and verify tokens
+router.set('superSecret', "pineapplesandpizza");
 
-var bcrypt = require('bcrypt');
-var salt = bcrypt.genSaltSync(10);
+
+
 
 router.use(bodyParser.urlencoded({ extended: true }));
 router.use(bodyParser.json());
@@ -385,22 +386,126 @@ router.get('/courtRoom/:id', function(req, res) {
 Lab 3 - Authentificatiom
 Part 1 - password hashing
 */
-// Default to insert user into table, password hased and salted/
-router.get('/setup', function(req, res) {
-	password = bcrypt.hashSync("my password", salt);
+var bcrypt = require('bcrypt');
+var salt = bcrypt.genSaltSync(10);
 
-  	// create a sample user
-	var user = models.Users.create({
-		username: "John",
-		password: password
+// Default to insert user into table, password hased and salted/
+router.get('/adduser', function(req, res) {
+	var name = req.param('username');
+	var password = req.param('password');
+	hash = bcrypt.hashSync(password, salt);
+
+	models.Users.create({
+		username: name,
+		password: hash
 	}).then(function(user) {
-		res.send(user)
+		res.json(user);
+	});
+
+});
+
+
+
+/*
+Lab 3 
+Part 2
+JWT secured version on the user table
+*/
+
+router.post('/authenticate', function(req, res) {
+	var user_name = req.query.username;
+	var paswordEntered = req.query.password;
+	var salt = bcrypt.genSaltSync(10);
+	var hash = bcrypt.hashSync(paswordEntered, salt);
+	console.log(hash);
+	models.Users.find({
+		where: {
+	    	username: user_name
+	    }
+	}).then(function(users) {
+		if (users) {      		
+      		var result = bcrypt.compareSync(paswordEntered, users.password);
+      		if(result == true) {
+      			// passowrd match
+      			//res.json({ success: false, message: 'Username and Password match' });
+
+      			// Create jwt token 
+      			// create a token
+		        var token = jwt.sign({users:users.username}, router.get('superSecret'), {
+		        	expiresIn: 86400 // expires in 24 hours
+		        });
+
+		        res.json({
+		          success: true,
+		          message: '200',
+		          token: token
+		        });
+
+
+
+      		} else if(result == false) {
+      			// Passowrds do not match
+		        res.json({
+		          success: false,
+		          message: '403'
+		        });
+      		}
+    	} else {
+    		//res.json({ success: true, message: 'Authentication Success, user found.' });
+    		// Check if password match
+    		res.json({ success: false, message: 'Authentication failed. User not found.' });
+    	}
+
+
 	});
 });
+
+
+var apiRoutes = express.Router();
+
+apiRoutes.use(function(req, res, next) {
+  // check header or url parameters or post parameters for token
+  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  console.log("Token " + token);
+  if (token) {
+      // verifies secret and checks exp
+  	jwt.verify(token, router.get('superSecret'), function(err, decoded) {      
+  		//res.send(decoded);
+  		if(err == null) {
+  			req.decoded = decoded;  
+  			//res.send(decoded);
+  			//console.log("before next " + decoded); 
+  			next();
+  		} else {
+  			    return res.status(403).send({ 
+		        success: false, 
+		        message: 'Invalid token.' 
+		    });
+  		}	
+    });
+  } else {
+  	    return res.status(403).send({ 
+        success: false, 
+        message: 'No token provided.' 
+    });
+  }
+
+});
+
+router.use(apiRoutes);
 
 router.get('/users', function(req, res) {
 	models.Users.findAll({}).then(function(user) {
 		res.json(user);
 	});
 });
+
+
+
+
+
+
+
+
+
 

@@ -26,3 +26,7 @@ curl -X PUT --data "result=false" http://127.0.0.1:3000/case/10
 curl -X PUT --data "type=respondent" http://127.0.0.1:3000/participant/1s
 
 curl -X PUT --data "number=10" http://127.0.0.1:3000/courtroom/2
+
+
+// Insert user - password is hashed.
+localhost:3000/adduser?username=barry&password=123
