@@ -11,12 +11,41 @@ var models = require('../models/index');
 var bodyParser = require('body-parser');
 var jwt    = require('jsonwebtoken'); // used to create, sign, and verify tokens
 router.set('superSecret', "pineapplesandpizza");
-
-
-
-
 router.use(bodyParser.urlencoded({ extended: true }));
 router.use(bodyParser.json());
+
+var apiRoutes = express.Router();
+
+apiRoutes.use(function(req, res, next) {
+  // check header or url parameters or post parameters for token
+  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  console.log("Token " + token);
+  if (token) {
+      // verifies secret and checks exp
+  	jwt.verify(token, router.get('superSecret'), function(err, decoded) {      
+  		//res.send(decoded);
+  		if(err == null) {
+  			req.decoded = decoded;  
+  			//res.send(decoded);
+  			//console.log("before next " + decoded); 
+  			next();
+  		} else {
+  			    return res.status(403).send({ 
+		        success: false, 
+		        message: 'Invalid token.' 
+		    });
+  		}	
+    });
+  } else {
+  	    return res.status(403).send({ 
+        success: false, 
+        message: 'No token provided.' 
+    });
+  }
+
+});
+
+router.use(apiRoutes);
 
 router.get('/', function (req, res) {
 	res.send('Enterprise Application DEvelopment!')
@@ -460,39 +489,6 @@ router.post('/authenticate', function(req, res) {
 	});
 });
 
-
-var apiRoutes = express.Router();
-
-apiRoutes.use(function(req, res, next) {
-  // check header or url parameters or post parameters for token
-  var token = req.body.token || req.query.token || req.headers['x-access-token'];
-  console.log("Token " + token);
-  if (token) {
-      // verifies secret and checks exp
-  	jwt.verify(token, router.get('superSecret'), function(err, decoded) {      
-  		//res.send(decoded);
-  		if(err == null) {
-  			req.decoded = decoded;  
-  			//res.send(decoded);
-  			//console.log("before next " + decoded); 
-  			next();
-  		} else {
-  			    return res.status(403).send({ 
-		        success: false, 
-		        message: 'Invalid token.' 
-		    });
-  		}	
-    });
-  } else {
-  	    return res.status(403).send({ 
-        success: false, 
-        message: 'No token provided.' 
-    });
-  }
-
-});
-
-router.use(apiRoutes);
 
 router.get('/users', function(req, res) {
 	models.Users.findAll({}).then(function(user) {

@@ -1,8 +1,8 @@
 'use strict';
 module.exports = function(sequelize, DataTypes) {
-  var Users = sequelize.define('Users', {
-    username: DataTypes.STRING,
-    password: DataTypes.STRING,
+  var Keys = sequelize.define('Keys', {
+    apikeys: DataTypes.STRING,
+    secretkeys: DataTypes.STRING
   }, {
     classMethods: {
       associate: function(models) {
@@ -10,5 +10,5 @@ module.exports = function(sequelize, DataTypes) {
       }
     }
   });
-  return Users;
+  return Keys;
 };
