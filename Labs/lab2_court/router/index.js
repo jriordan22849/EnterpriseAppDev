@@ -14,20 +14,97 @@ router.set('superSecret', "pineapplesandpizza");
 router.use(bodyParser.urlencoded({ extended: true }));
 router.use(bodyParser.json());
 
+
+/*
+Lab 3 - Authentificatiom
+Part 1 - password hashing
+*/
+var bcrypt = require('bcrypt');
+var salt = bcrypt.genSaltSync(10);
+
+// Default to insert user into table, password hased and salted/
+router.get('/adduser', function(req, res) {
+	var name = req.param('username');
+	var password = req.param('password');
+	hash = bcrypt.hashSync(password, salt);
+
+	models.Users.create({
+		username: name,
+		password: hash
+	}).then(function(user) {
+		res.json(user);
+	});
+
+});
+
+router.post('/authenticate', function(req, res) {
+	var user_name = req.query.username;
+	var paswordEntered = req.query.password;
+	var salt = bcrypt.genSaltSync(10);
+	var hash = bcrypt.hashSync(paswordEntered, salt);
+	console.log(hash);
+	models.Users.find({
+		where: {
+	    	username: user_name
+	    }
+	}).then(function(users) {
+		if (users) {      		
+      		var result = bcrypt.compareSync(paswordEntered, users.password);
+      		if(result == true) {
+      			// passowrd match
+      			//res.json({ success: false, message: 'Username and Password match' });
+
+      			// Create jwt token 
+      			// create a token
+		        var token = jwt.sign({users:users.username}, router.get('superSecret'), {
+		        	expiresIn: 86400 // expires in 24 hours
+		        });
+
+		        res.json({
+		          success: true,
+		          message: '200',
+		          token: token
+		        });
+
+
+
+      		} else if(result == false) {
+      			// Passowrds do not match
+		        res.json({
+		          success: false,
+		          message: '403'
+		        });
+      		}
+    	} else {
+    		//res.json({ success: true, message: 'Authentication Success, user found.' });
+    		// Check if password match
+    		res.json({ success: false, message: 'Authentication failed. User not found.' });
+    	}
+
+
+	});
+});
+
 var apiRoutes = express.Router();
 
 apiRoutes.use(function(req, res, next) {
   // check header or url parameters or post parameters for token
   var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  var quesryParam = req.query ||  req.body;
+  quesryParam = JSON.stringify(quesryParam);
+  console.log("query " + quesryParam);
+  var salt = bcrypt.genSaltSync(10);
+  var hash = bcrypt.hashSync(quesryParam, salt);
+
   console.log("Token " + token);
+  console.log("hash " + hash);
+
   if (token) {
       // verifies secret and checks exp
   	jwt.verify(token, router.get('superSecret'), function(err, decoded) {      
   		//res.send(decoded);
   		if(err == null) {
-  			req.decoded = decoded;  
-  			//res.send(decoded);
-  			//console.log("before next " + decoded); 
+  			req.decoded = decoded;   
   			next();
   		} else {
   			    return res.status(403).send({ 
@@ -45,7 +122,7 @@ apiRoutes.use(function(req, res, next) {
 
 });
 
-router.use(apiRoutes);
+router.all('*/', apiRoutes);
 
 router.get('/', function (req, res) {
 	res.send('Enterprise Application DEvelopment!')
@@ -415,23 +492,23 @@ router.get('/courtRoom/:id', function(req, res) {
 Lab 3 - Authentificatiom
 Part 1 - password hashing
 */
-var bcrypt = require('bcrypt');
-var salt = bcrypt.genSaltSync(10);
+// var bcrypt = require('bcrypt');
+// var salt = bcrypt.genSaltSync(10);
 
-// Default to insert user into table, password hased and salted/
-router.get('/adduser', function(req, res) {
-	var name = req.param('username');
-	var password = req.param('password');
-	hash = bcrypt.hashSync(password, salt);
+// // Default to insert user into table, password hased and salted/
+// router.get('/adduser', function(req, res) {
+// 	var name = req.param('username');
+// 	var password = req.param('password');
+// 	hash = bcrypt.hashSync(password, salt);
 
-	models.Users.create({
-		username: name,
-		password: hash
-	}).then(function(user) {
-		res.json(user);
-	});
+// 	models.Users.create({
+// 		username: name,
+// 		password: hash
+// 	}).then(function(user) {
+// 		res.json(user);
+// 	});
 
-});
+// });
 
 
 
@@ -441,53 +518,7 @@ Part 2
 JWT secured version on the user table
 */
 
-router.post('/authenticate', function(req, res) {
-	var user_name = req.query.username;
-	var paswordEntered = req.query.password;
-	var salt = bcrypt.genSaltSync(10);
-	var hash = bcrypt.hashSync(paswordEntered, salt);
-	console.log(hash);
-	models.Users.find({
-		where: {
-	    	username: user_name
-	    }
-	}).then(function(users) {
-		if (users) {      		
-      		var result = bcrypt.compareSync(paswordEntered, users.password);
-      		if(result == true) {
-      			// passowrd match
-      			//res.json({ success: false, message: 'Username and Password match' });
 
-      			// Create jwt token 
-      			// create a token
-		        var token = jwt.sign({users:users.username}, router.get('superSecret'), {
-		        	expiresIn: 86400 // expires in 24 hours
-		        });
-
-		        res.json({
-		          success: true,
-		          message: '200',
-		          token: token
-		        });
-
-
-
-      		} else if(result == false) {
-      			// Passowrds do not match
-		        res.json({
-		          success: false,
-		          message: '403'
-		        });
-      		}
-    	} else {
-    		//res.json({ success: true, message: 'Authentication Success, user found.' });
-    		// Check if password match
-    		res.json({ success: false, message: 'Authentication failed. User not found.' });
-    	}
-
-
-	});
-});
 
 
 router.get('/users', function(req, res) {
